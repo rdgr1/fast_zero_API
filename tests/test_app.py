@@ -1,12 +1,16 @@
-from http import HTTPStatus
+from fastapi import fastAPI 
+from fastapi.responses import HTMLResponse
 
-from fastapi.testclient import testclient
+app = FastAPI()
 
-from fast_zero.app import app
-
-def test_root
-    client = TestClient(app) #Arrange 
-    response = client.get('/') #Act
-
-    assert response.status_code == HTTPStatus.OK #Assert
-    assert response.json() == {'message':'Hello, World'} 
+@app.get('/', repsonse_class=HTMLRepsonses)
+def read_root():
+    return """
+    <html>
+        <head>
+            <title> Nosso olá mundo!</title>
+        </head>
+        <body>
+            <h1> Olá Mundo </h1>
+        </body>
+    </html>"""
