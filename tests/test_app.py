@@ -46,8 +46,7 @@ def test_update_user(client):
         'username': 'bob',
         'email': 'bob@example.com',
         'id': 1,
-    }
-
+    } 
 
 def test_delete_user(client):
     response = client.delete('/users/1')

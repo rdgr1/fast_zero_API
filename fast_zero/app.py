@@ -40,3 +40,7 @@ def delete_user(user_id: int):
     del database[user_id - 1]
 
     return {'message': 'User DELETED'}
+
+@app.get('/users/{id}', response_model=UserPublic)
+def read_user_id(user_id: int):
+    return user_with_id
