@@ -4,18 +4,10 @@ from fast_zero.models import User
 
 
 def test_create_user(session):
+    user = User(username='alice', password='secret', email='teste@test')
+    session.add(user)
+    session.commit()
 
-    with Session(engine) as session:
-        user = User(
-            username='test',
-            email='test@test.com',
-            password='secret',
-        )
-        session.add(user)
-        session.commit()
+    user = session.scalar(select(User).where(User.username == 'alice'))
 
-        result = session.scalar(
-            select(User).where(User.email == 'duno@ssauro.com')
-        )
-
-    assert result.username == 'test'
+    assert user.username == 'alice'
