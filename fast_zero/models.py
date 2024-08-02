@@ -18,6 +18,6 @@ class User:
         init=False, server_default=func.now()
     )
     update_at:Mapped[datetime] = mapped_column(
-        init=False, server_default=func.now()
+        onupdate = func.now()
     )
     
