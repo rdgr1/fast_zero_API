@@ -14,7 +14,7 @@ def client():
 
 @pytest.fixture
 def session():
-    engine = create_engine('sqlite:///:memory:')
+    engine = create_engine('sqlite:///database.db')
     table_registry.metadata.create_all(engine)
     with Session(engine) as engine:
         yield session
