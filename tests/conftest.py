@@ -11,14 +11,15 @@ from fast_zero.models import table_registry
 
 @pytest.fixture
 def session():
-    engine = create_engine('sqlite:///memory:',
-    table_registry.metadata.create_all(engine),
-    connect_args={'check_same_thread': False},
-    poolclass=StaticPool,
+    engine = create_engine(
+        'sqlite:///:memory:',
+        connect_args={'check_same_thread': False},
+        poolclass=StaticPool,
     )
+    (table_registry.metadata.create_all(engine),)
+
     with Session(engine) as engine:
         yield session
-
     table_registry.metadata.drop_all(engine)
 
 
