@@ -6,14 +6,12 @@ from sqlalchemy.orm import Session
 
 from fast_zero.database import get_session
 from fast_zero.models import User
-from fast_zero.schemas import UserList, UserPublic, UserSchema
+from fast_zero.schemas import UserList, UserPublic, UserSchema, Message
 
 app = FastAPI()
 
-
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
-def create_user(user: UserSchema, session=Depends(get_session)):
-    session = get_session()
+def create_user(user: UserSchema, session: Session = Depends(get_session)):
     db_user = session.scalar(
         select(User).where(
             (User.username == user.username) | (User.email == user.email)
@@ -41,11 +39,47 @@ def create_user(user: UserSchema, session=Depends(get_session)):
 
     return db_user
 
-
 @app.get('/users/', response_model=UserList)
-def read_users(session: Session = Depends(get_session)):
-    limit: int = 10,
-    skip: int = 0,
-    user = session.scalars(select(User).limit(limit).offset(skip)
+def read_users(
+    skip: int = 0, limit: int = 100, session: Session = Depends(get_session)
+):
+    users = session.scalars(select(User).offset(skip).limit(limit)).all()
+    return {'users': users}
+
+@app.put('/users/{user_id}', response_model=UserPublic)
+def update_users(
+    user_id: int, user: UserSchema, session: Session = Depends(get_session)
+):
+    db_user = session.scalar(
+        select(User).where(User.id == user_id)
     )
-    return {'users': user}
+    if not db_user:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+        )
+    db_user.username = user.username
+    db_user.password = user.password
+    db_user.email = user.email
+
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+
+    return db_user
+
+@app.delete('/users/{user_id}', response_model=Message)
+def delete_users(
+    user_id: int, session: Session = Depends(get_session)
+):
+    db_user = session.scalar(
+        select(User).where(User.id == user_id)
+    )
+    if not db_user:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+        )
+    
+    session.delete(db_user)
+    session.commit()
+    
+    return {'message': 'User deleted'}
