@@ -25,3 +25,7 @@ class UserList(BaseModel):
 class Token(BaseModel):
     acess_token: str
     token_type: str
+
+
+class TokenData(Basemodel):
+    username: str | None == None
