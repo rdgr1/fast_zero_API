@@ -59,3 +59,14 @@ def test_get_user_by_id(client, user):
         'username': user.username,
         'email': user.email,
     }
+
+
+def test_get_token(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': user.clean_password},
+    )
+    token = response.json()
+    assert response.status_code == HTTPStatus.OK
+    assert token['token_type'] == 'Bearer'
+    assert token['acess_token']
