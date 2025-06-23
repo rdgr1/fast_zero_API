@@ -16,7 +16,7 @@ pwdlib = {extras = ["argon2"], version = "^0.2.0"}
 python-multipart = "^0.0.9"
 pyjwt = "^2.9.0"
 tzdata = "^2024.1"
-
+psycopg2-binary = "^2.9"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.1"

@@ -1,56 +1,61 @@
 from datetime import datetime, timedelta
 from http import HTTPStatus
-
-from jwt import encode, decode, DecodeError
-from pwdlib import PasswordHash
-from sqlalchemy.orm import Session
-from sqlalchemy import select
 from zoneinfo import ZoneInfo
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from jwt import encode, decode, DecodeError
+from pwdlib import PasswordHash
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from fast_zero.database import get_session
-from fast_zero.models import  User
-from fast_zero.schema import TokenData
+from fast_zero.models import User
+from fast_zero.settings import settings
 
 pwd_context = PasswordHash.recommended()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
-SECRET_KEY = 'you-secret-key'
-ALGORITHM = 'HS256'
-ACESS_TOKEN_EXPIRES_MINUTES = 30
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
-def get_password(password: str):
+def get_password(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def verify_password(plain_password: str, hashed_password: str):
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_acess_token(data: dict):
+def create_access_token(data: dict) -> str:
     to_encode = data.copy()
-
-    expire = datetime.now(tz=ZoneInfo('UTC')) + timedelta(
-        minutes=ACESS_TOKEN_EXPIRES_MINUTES
+    expire = datetime.now(tz=ZoneInfo("UTC")) + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
     )
-
-    to_encode.update({'exp': expire})
-    encoded_jwt = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-    return encoded_jwt
+    to_encode.update({"exp": expire})
+    return encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def get_current_user():
-    session: Session = Depends(get_session),
+def get_current_user(
     token: str = Depends(oauth2_scheme),
-
+    session: Session = Depends(get_session),
+) -> User:
     credentials_exception = HTTPException(
         status_code=HTTPStatus.UNAUTHORIZED,
-        detail='Could not validated credentials'
-        headers={'WWW.Authenticate':'Bearer'}
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = decode(token, SECRET_KEY, algorithm=[ALGORITHM])
-        username: str
+        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if not username:
+            raise credentials_exception
+    except DecodeError:
+        raise credentials_exception
+
+    user = session.scalar(select(User).where(User.username == username))
+    if not user:
+        raise credentials_exception
+    return user
